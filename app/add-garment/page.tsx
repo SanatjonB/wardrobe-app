@@ -29,20 +29,22 @@ export default function AddGarmentPage() {
     return json.url;
   }
 
-  async function handleSubmit(e: any) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
+    const formElement = e.currentTarget; // <- typed correctly
+    const fileInput = formElement.image as HTMLInputElement; // <- typed correctly
+    const file = fileInput.files?.[0] || null;
+
     let url = imageURL;
 
-    // Upload image only if a new file was selected
-    const file = e.target.image.files[0];
+    // Upload image if file selected
     if (file) {
       url = await uploadImage(file);
       setImageURL(url);
     }
 
-    // POST request to backend
     const res = await fetch("/api/garments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

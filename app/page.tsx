@@ -5,8 +5,8 @@ import { useState } from "react";
 export default function Home() {
   const [imageURL, setImageURL] = useState("");
 
-  async function handleUpload(e: any) {
-    const file = e.target.files[0];
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();

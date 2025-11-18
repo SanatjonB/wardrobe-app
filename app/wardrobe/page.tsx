@@ -22,7 +22,15 @@ export default function WardrobePage() {
   const [wearCount, setWearCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
-  const USER_ID = "YOUR_REAL_UUID_HERE";
+  const USER_ID = "f10cfb24-a3b9-4a4b-83f2-b40012a2b2eb";
+
+  // Filters
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterColor, setFilterColor] = useState<string>("all");
+  const [filterSeason, setFilterSeason] = useState<string>("all");
+
+  // Edit modal state
+  const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
 
   async function markAsWorn(garmentId: string) {
     await fetch("/api/wear", {
@@ -33,8 +41,6 @@ export default function WardrobePage() {
         garment_id: garmentId,
       }),
     });
-
-    alert("Marked as worn!");
 
     loadLastWorn();
     loadWearCount();
@@ -50,6 +56,47 @@ export default function WardrobePage() {
     const res = await fetch(`/api/wear-count?user_id=${USER_ID}`);
     const data = await res.json();
     setWearCount(data);
+  }
+
+  function startEdit(g: Garment) {
+    setEditingGarment(g);
+  }
+
+  async function saveEdit() {
+    if (!editingGarment) return;
+
+    const res = await fetch(`/api/garments/${editingGarment.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editingGarment),
+    });
+
+    if (!res.ok) {
+      alert("Error saving changes");
+      return;
+    }
+
+    setGarments((prev) =>
+      prev.map((g) => (g.id === editingGarment.id ? editingGarment : g))
+    );
+
+    setEditingGarment(null);
+  }
+
+  async function deleteGarment(id: string) {
+    const yes = confirm("Delete this item?");
+    if (!yes) return;
+
+    const res = await fetch(`/api/garments/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      alert("Error deleting garment");
+      return;
+    }
+
+    setGarments((prev) => prev.filter((g) => g.id !== id));
   }
 
   useEffect(() => {
@@ -105,9 +152,69 @@ export default function WardrobePage() {
         </button>
       </div>
 
-      {/* Garments Grid with Sorting Applied */}
+      {/* FILTERS */}
+      <div className="flex gap-3 mb-6">
+        <select
+          className="px-3 py-1 border rounded"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="all">All Categories</option>
+          <option value="1">T-Shirts</option>
+          <option value="2">Shirts</option>
+          <option value="3">Sweaters</option>
+          <option value="4">Hoodies</option>
+          <option value="5">Jackets</option>
+          <option value="6">Coats</option>
+          <option value="7">Jeans</option>
+          <option value="8">Pants</option>
+          <option value="9">Shorts</option>
+          <option value="10">Skirts</option>
+          <option value="11">Dresses</option>
+          <option value="12">Sneakers</option>
+        </select>
+
+        <select
+          className="px-3 py-1 border rounded"
+          value={filterColor}
+          onChange={(e) => setFilterColor(e.target.value)}
+        >
+          <option value="all">All Colors</option>
+          <option value="Black">Black</option>
+          <option value="White">White</option>
+          <option value="Gray">Gray</option>
+          <option value="Blue">Blue</option>
+          <option value="Red">Red</option>
+          <option value="Green">Green</option>
+        </select>
+
+        <select
+          className="px-3 py-1 border rounded"
+          value={filterSeason}
+          onChange={(e) => setFilterSeason(e.target.value)}
+        >
+          <option value="all">All Seasons</option>
+          <option value="Summer">Summer</option>
+          <option value="Winter">Winter</option>
+          <option value="Spring">Spring</option>
+          <option value="Fall">Fall</option>
+        </select>
+      </div>
+
+      {/* Garments Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {[...garments]
+          .filter((g) => {
+            if (
+              filterCategory !== "all" &&
+              g.category_id !== Number(filterCategory)
+            )
+              return false;
+            if (filterColor !== "all" && g.color !== filterColor) return false;
+            if (filterSeason !== "all" && g.season !== filterSeason)
+              return false;
+            return true;
+          })
           .sort((a, b) => {
             const lastA = lastWorn[a.id]
               ? new Date(lastWorn[a.id]).getTime()
@@ -133,7 +240,6 @@ export default function WardrobePage() {
                 alt={g.name}
                 className="w-full h-40 object-cover rounded"
               />
-
               <div className="mt-2">
                 <p className="font-semibold">{g.name}</p>
                 <p className="text-sm text-gray-600">
@@ -142,7 +248,6 @@ export default function WardrobePage() {
                 <p className="text-sm text-gray-500">{g.color}</p>
                 <p className="text-sm text-gray-500">Size: {g.size ?? "—"}</p>
 
-                {/* Last worn */}
                 <p className="text-xs text-gray-500 mt-1">
                   Last worn:{" "}
                   {lastWorn[g.id]
@@ -150,10 +255,26 @@ export default function WardrobePage() {
                     : "Never"}
                 </p>
 
-                {/* Wear count */}
                 <p className="text-xs text-gray-500">
                   Worn: {wearCount[g.id] ?? 0} times
                 </p>
+              </div>
+
+              {/* Edit/Delete Buttons */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => startEdit(g)}
+                  className="flex-1 bg-blue-500 text-white py-1 rounded hover:bg-blue-600"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteGarment(g.id)}
+                  className="flex-1 bg-red-500 text-white py-1 rounded hover:bg-red-600"
+                >
+                  Delete
+                </button>
               </div>
 
               <button
@@ -165,6 +286,76 @@ export default function WardrobePage() {
             </div>
           ))}
       </div>
+
+      {/* EDIT MODAL */}
+      {editingGarment && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4">Edit Garment</h2>
+
+            <input
+              className="w-full p-2 border rounded mb-3"
+              value={editingGarment.name}
+              onChange={(e) =>
+                setEditingGarment({ ...editingGarment, name: e.target.value })
+              }
+              placeholder="Name"
+            />
+
+            <input
+              className="w-full p-2 border rounded mb-3"
+              value={editingGarment.brand || ""}
+              onChange={(e) =>
+                setEditingGarment({ ...editingGarment, brand: e.target.value })
+              }
+              placeholder="Brand"
+            />
+
+            <input
+              className="w-full p-2 border rounded mb-3"
+              value={editingGarment.color || ""}
+              onChange={(e) =>
+                setEditingGarment({ ...editingGarment, color: e.target.value })
+              }
+              placeholder="Color"
+            />
+
+            <input
+              className="w-full p-2 border rounded mb-3"
+              value={editingGarment.size || ""}
+              onChange={(e) =>
+                setEditingGarment({ ...editingGarment, size: e.target.value })
+              }
+              placeholder="Size"
+            />
+
+            <input
+              className="w-full p-2 border rounded mb-3"
+              value={editingGarment.season || ""}
+              onChange={(e) =>
+                setEditingGarment({ ...editingGarment, season: e.target.value })
+              }
+              placeholder="Season"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={saveEdit}
+                className="flex-1 bg-green-600 text-white py-2 rounded"
+              >
+                Save
+              </button>
+
+              <button
+                onClick={() => setEditingGarment(null)}
+                className="flex-1 bg-gray-500 text-white py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

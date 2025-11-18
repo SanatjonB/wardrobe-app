@@ -10,15 +10,15 @@ export async function GET(request: Request) {
     return Response.json({ error: "user_id is required" }, { status: 400 });
   }
 
-  // Fetch all wear events for the user
   const { data, error } = await supabase
     .from("wear_events")
     .select("garment_id")
     .eq("user_id", user_id);
 
-  if (error) return Response.json({ error }, { status: 500 });
+  if (error) {
+    return Response.json({ error }, { status: 500 });
+  }
 
-  // Count occurrences per garment_id
   const wearCounts: Record<string, number> = {};
 
   data.forEach((event) => {
