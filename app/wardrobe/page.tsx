@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Garment {
   id: string;
@@ -29,9 +30,12 @@ export default function WardrobePage() {
   const [filterColor, setFilterColor] = useState<string>("all");
   const [filterSeason, setFilterSeason] = useState<string>("all");
 
-  // Edit modal state
+  // Edit modal
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
 
+  // --------------------------
+  // Wear Tracking
+  // --------------------------
   async function markAsWorn(garmentId: string) {
     await fetch("/api/wear", {
       method: "POST",
@@ -58,6 +62,9 @@ export default function WardrobePage() {
     setWearCount(data);
   }
 
+  // --------------------------
+  // Editing
+  // --------------------------
   function startEdit(g: Garment) {
     setEditingGarment(g);
   }
@@ -76,6 +83,7 @@ export default function WardrobePage() {
       return;
     }
 
+    // Update UI
     setGarments((prev) =>
       prev.map((g) => (g.id === editingGarment.id ? editingGarment : g))
     );
@@ -83,6 +91,9 @@ export default function WardrobePage() {
     setEditingGarment(null);
   }
 
+  // --------------------------
+  // Deleting
+  // --------------------------
   async function deleteGarment(id: string) {
     const yes = confirm("Delete this item?");
     if (!yes) return;
@@ -99,6 +110,9 @@ export default function WardrobePage() {
     setGarments((prev) => prev.filter((g) => g.id !== id));
   }
 
+  // --------------------------
+  // Initial Load
+  // --------------------------
   useEffect(() => {
     async function load() {
       const res = await fetch(`/api/garments?user_id=${USER_ID}`);
@@ -120,11 +134,14 @@ export default function WardrobePage() {
     );
   }
 
+  // --------------------------
+  // UI
+  // --------------------------
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">My Wardrobe</h1>
 
-      {/* Sorting Buttons */}
+      {/* Sorting */}
       <div className="flex gap-3 mb-6">
         <button
           onClick={() => setSortType("recent")}
@@ -152,7 +169,7 @@ export default function WardrobePage() {
         </button>
       </div>
 
-      {/* FILTERS */}
+      {/* Filters */}
       <div className="flex gap-3 mb-6">
         <select
           className="px-3 py-1 border rounded"
@@ -230,16 +247,22 @@ export default function WardrobePage() {
             if (sortType === "old") return lastA - lastB;
             if (sortType === "most") return countB - countA;
             if (sortType === "least") return countA - countB;
-
             return 0;
           })
           .map((g) => (
             <div key={g.id} className="rounded-lg border p-3 shadow-sm">
-              <img
-                src={g.image_url}
-                alt={g.name}
-                className="w-full h-40 object-cover rounded"
-              />
+              {/* Image */}
+              <div className="relative w-full h-40">
+                <Image
+                  src={g.image_url}
+                  alt={g.name}
+                  fill
+                  unoptimized
+                  className="object-cover rounded"
+                />
+              </div>
+
+              {/* Info */}
               <div className="mt-2">
                 <p className="font-semibold">{g.name}</p>
                 <p className="text-sm text-gray-600">
@@ -260,15 +283,21 @@ export default function WardrobePage() {
                 </p>
               </div>
 
-              {/* Edit/Delete Buttons */}
-              <div className="flex gap-2 mt-3">
+              {/* Buttons */}
+              <button
+                onClick={() => markAsWorn(g.id)}
+                className="mt-3 w-full bg-green-600 text-white py-1 rounded hover:bg-green-700"
+              >
+                Mark as Worn
+              </button>
+
+              <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => startEdit(g)}
                   className="flex-1 bg-blue-500 text-white py-1 rounded hover:bg-blue-600"
                 >
                   Edit
                 </button>
-
                 <button
                   onClick={() => deleteGarment(g.id)}
                   className="flex-1 bg-red-500 text-white py-1 rounded hover:bg-red-600"
@@ -276,13 +305,6 @@ export default function WardrobePage() {
                   Delete
                 </button>
               </div>
-
-              <button
-                onClick={() => markAsWorn(g.id)}
-                className="mt-3 w-full bg-green-600 text-white py-1 rounded hover:bg-green-700"
-              >
-                Mark as Worn
-              </button>
             </div>
           ))}
       </div>
@@ -304,7 +326,7 @@ export default function WardrobePage() {
 
             <input
               className="w-full p-2 border rounded mb-3"
-              value={editingGarment.brand || ""}
+              value={editingGarment.brand ?? ""}
               onChange={(e) =>
                 setEditingGarment({ ...editingGarment, brand: e.target.value })
               }
@@ -313,7 +335,7 @@ export default function WardrobePage() {
 
             <input
               className="w-full p-2 border rounded mb-3"
-              value={editingGarment.color || ""}
+              value={editingGarment.color ?? ""}
               onChange={(e) =>
                 setEditingGarment({ ...editingGarment, color: e.target.value })
               }
@@ -322,7 +344,7 @@ export default function WardrobePage() {
 
             <input
               className="w-full p-2 border rounded mb-3"
-              value={editingGarment.size || ""}
+              value={editingGarment.size ?? ""}
               onChange={(e) =>
                 setEditingGarment({ ...editingGarment, size: e.target.value })
               }
@@ -331,7 +353,7 @@ export default function WardrobePage() {
 
             <input
               className="w-full p-2 border rounded mb-3"
-              value={editingGarment.season || ""}
+              value={editingGarment.season ?? ""}
               onChange={(e) =>
                 setEditingGarment({ ...editingGarment, season: e.target.value })
               }

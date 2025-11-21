@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+
+const USER_ID = "f10cfb24-a3b9-4a4b-83f2-b40012a2b2eb";
+
+const DEFAULT_IMAGE = "/default-garment.png"; // local fallback
 
 export default function AddGarmentPage() {
   const [imageURL, setImageURL] = useState("");
   const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
-    user_id: "", // You will replace with real user ID later
     name: "",
     category_id: "",
     brand: "",
@@ -26,29 +31,34 @@ export default function AddGarmentPage() {
     });
 
     const json = await res.json();
-    return json.url;
+    return json.url; // public Supabase URL
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    const formElement = e.currentTarget; // <- typed correctly
-    const fileInput = formElement.image as HTMLInputElement; // <- typed correctly
+    const formElement = e.currentTarget;
+    const fileInput = formElement.image as HTMLInputElement;
     const file = fileInput.files?.[0] || null;
 
     let url = imageURL;
 
-    // Upload image if file selected
     if (file) {
       url = await uploadImage(file);
       setImageURL(url);
+    }
+
+    // Fallback to default image
+    if (!file && !imageURL) {
+      url = DEFAULT_IMAGE;
     }
 
     const res = await fetch("/api/garments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        user_id: USER_ID,
         ...form,
         category_id: Number(form.category_id),
         purchase_price: Number(form.purchase_price),
@@ -72,14 +82,6 @@ export default function AddGarmentPage() {
       <h1 className="text-2xl font-bold mb-6">Add New Garment</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="User ID"
-          className="w-full p-2 border rounded"
-          value={form.user_id}
-          onChange={(e) => setForm({ ...form, user_id: e.target.value })}
-        />
-
         <input
           type="text"
           placeholder="Name (e.g., Black Hoodie)"
@@ -153,11 +155,22 @@ export default function AddGarmentPage() {
           <input type="file" name="image" accept="image/*" />
         </div>
 
-        {imageURL && (
-          <img
+        {imageURL ? (
+          <Image
             src={imageURL}
             alt="preview"
+            width={128}
+            height={128}
+            unoptimized
             className="w-32 h-32 object-cover mt-3 rounded border"
+          />
+        ) : (
+          <Image
+            src={DEFAULT_IMAGE}
+            alt="default"
+            width={128}
+            height={128}
+            className="w-32 h-32 object-cover mt-3 rounded border opacity-60"
           />
         )}
 

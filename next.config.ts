@@ -4,7 +4,13 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   images: {
-    domains: ["qmtcyxcaiczaneqkjnvm.supabase.co"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "qmtcyxcaiczaneqkjnvm.supabase.co",
+        pathname: "/storage/v1/object/public/garments/**",
+      },
+    ],
   },
 };
 

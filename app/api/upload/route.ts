@@ -1,33 +1,41 @@
-import { supabaseServerClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: Request) {
-  const supabase = supabaseServerClient();
-
-  const formData = await request.formData();
-  const file = formData.get("file") as File;
+  const form = await request.formData();
+  const file = form.get("file") as File;
 
   if (!file) {
-    return Response.json({ error: "No file uploaded" }, { status: 400 });
+    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
   }
 
-  const fileName = `${Date.now()}-${file.name}`;
+  // Convert File → Buffer
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
 
-  // Upload to Supabase Storage
-  const { data, error } = await supabase.storage
+  const filename = `${Date.now()}-${file.name}`;
+
+  const { error } = await supabase.storage
     .from("garments")
-    .upload(fileName, file, {
-      cacheControl: "3600",
+    .upload(filename, buffer, {
+      contentType: file.type,
       upsert: false,
     });
 
   if (error) {
-    return Response.json({ error }, { status: 500 });
+    return NextResponse.json({ error }, { status: 500 });
   }
 
-  // Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("garments").getPublicUrl(fileName);
+  const { data: urlData } = supabase.storage
+    .from("garments")
+    .getPublicUrl(filename);
 
-  return Response.json({ url: publicUrl });
+  const publicUrl = urlData.publicUrl;
+
+  return NextResponse.json({ url: publicUrl });
 }
