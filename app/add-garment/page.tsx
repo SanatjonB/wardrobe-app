@@ -4,8 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 const USER_ID = "f10cfb24-a3b9-4a4b-83f2-b40012a2b2eb";
-
-const DEFAULT_IMAGE = "/default-garment.png"; // local fallback
+const DEFAULT_IMAGE = "/default-garment.png"; // fallback placeholder
 
 export default function AddGarmentPage() {
   const [imageURL, setImageURL] = useState("");
@@ -20,6 +19,12 @@ export default function AddGarmentPage() {
     season: "",
     purchase_price: "",
   });
+
+  // Show a local preview BEFORE submitting
+  function handleImagePreview(file: File) {
+    const localURL = URL.createObjectURL(file);
+    setImageURL(localURL);
+  }
 
   async function uploadImage(file: File) {
     const data = new FormData();
@@ -42,16 +47,17 @@ export default function AddGarmentPage() {
     const fileInput = formElement.image as HTMLInputElement;
     const file = fileInput.files?.[0] || null;
 
-    let url = imageURL;
+    let finalImageURL = imageURL;
 
+    // If user uploaded a file → upload to Supabase
     if (file) {
-      url = await uploadImage(file);
-      setImageURL(url);
+      finalImageURL = await uploadImage(file);
+      setImageURL(finalImageURL);
     }
 
-    // Fallback to default image
+    // If no file selected and no preview → use default placeholder
     if (!file && !imageURL) {
-      url = DEFAULT_IMAGE;
+      finalImageURL = DEFAULT_IMAGE;
     }
 
     const res = await fetch("/api/garments", {
@@ -62,7 +68,7 @@ export default function AddGarmentPage() {
         ...form,
         category_id: Number(form.category_id),
         purchase_price: Number(form.purchase_price),
-        image_url: url,
+        image_url: finalImageURL,
       }),
     });
 
@@ -84,7 +90,7 @@ export default function AddGarmentPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          placeholder="Name (e.g., Black Hoodie)"
+          placeholder="Name"
           className="w-full p-2 border rounded"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -150,11 +156,21 @@ export default function AddGarmentPage() {
           onChange={(e) => setForm({ ...form, purchase_price: e.target.value })}
         />
 
+        {/* IMAGE INPUT */}
         <div>
           <label className="block mb-1">Image</label>
-          <input type="file" name="image" accept="image/*" />
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImagePreview(file);
+            }}
+          />
         </div>
 
+        {/* IMAGE PREVIEW */}
         {imageURL ? (
           <Image
             src={imageURL}
@@ -174,10 +190,11 @@ export default function AddGarmentPage() {
           />
         )}
 
+        {/* SUBMIT BUTTON */}
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
         >
           {loading ? "Saving..." : "Add Garment"}
         </button>
