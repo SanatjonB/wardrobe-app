@@ -1,35 +1,59 @@
-"use client";
+import Link from "next/link";
 
-import { useRouter } from "next/navigation";
-
-export default function HomePage() {
-  const router = useRouter();
-
+export default function LandingPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 w-full max-w-sm text-center space-y-6">
-        <h1 className="text-2xl font-bold text-white">Wardrobe App</h1>
+    <div className="py-10">
+      <div className="bg-white border border-gray-300 rounded-xl shadow-lg p-10">
+        <h1 className="text-4xl font-bold text-gray-900">
+          See all your clothes. Stop buying duplicates.
+        </h1>
 
-        <p className="text-sm text-gray-400">
-          Manage what you own and what you wear
+        <p className="mt-4 text-gray-600 max-w-2xl">
+          Track what you own, filter instantly, log wears, and get AI-powered
+          recommendations on what to buy next based on what you already have.
         </p>
 
-        <div className="space-y-3">
-          <button
-            onClick={() => router.push("/wardrobe")}
-            className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+        <div className="mt-6 flex gap-3">
+          <Link
+            href="/auth/sign-up"
+            className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
           >
-            Go to Wardrobe
-          </button>
+            Get started
+          </Link>
 
-          <button
-            onClick={() => router.push("/add-garment")}
-            className="w-full py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white font-medium transition"
+          <Link
+            href="/auth/sign-in"
+            className="px-5 py-3 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 font-medium transition"
           >
-            Add Garment
-          </button>
+            Sign in
+          </Link>
+        </div>
+
+        <div className="mt-10 grid sm:grid-cols-3 gap-4">
+          <div className="p-5 rounded-lg border bg-gray-50">
+            <p className="font-semibold text-gray-900">
+              All your clothes, organized
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              One place to see everything you own with fast filters.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-lg border bg-gray-50">
+            <p className="font-semibold text-gray-900">Wear tracking</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Know what you actually wear and what sits unused.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-lg border bg-gray-50">
+            <p className="font-semibold text-gray-900">AI recommendations</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Buy what you need next—based on gaps and wear behavior.
+            </p>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

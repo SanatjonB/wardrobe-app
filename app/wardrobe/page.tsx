@@ -52,13 +52,40 @@ export default function WardrobePage() {
 
   async function loadLastWorn() {
     const res = await fetch(`/api/last-worn?user_id=${USER_ID}`);
-    const data = await res.json();
+
+    const text = await res.text();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(
+        `API returned non-JSON (${res.status}): ${text.slice(0, 200)}`
+      );
+    }
+
+    if (!res.ok) {
+      throw new Error(`API error (${res.status}): ${JSON.stringify(data)}`);
+    }
     setLastWorn(data);
   }
 
   async function loadWearCount() {
     const res = await fetch(`/api/wear-count?user_id=${USER_ID}`);
-    const data = await res.json();
+    const text = await res.text();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(
+        `API returned non-JSON (${res.status}): ${text.slice(0, 200)}`
+      );
+    }
+
+    if (!res.ok) {
+      throw new Error(`API error (${res.status}): ${JSON.stringify(data)}`);
+    }
     setWearCount(data);
   }
 
@@ -116,7 +143,22 @@ export default function WardrobePage() {
   useEffect(() => {
     async function load() {
       const res = await fetch(`/api/garments?user_id=${USER_ID}`);
-      const data = await res.json();
+
+      const text = await res.text();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        throw new Error(
+          `API returned non-JSON (${res.status}): ${text.slice(0, 200)}`
+        );
+      }
+
+      if (!res.ok) {
+        throw new Error(`API error (${res.status}): ${JSON.stringify(data)}`);
+      }
+
       setGarments(data);
 
       await loadLastWorn();

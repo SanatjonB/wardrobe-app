@@ -1,32 +1,28 @@
+import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabase/server";
 
-export async function DELETE(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params; // 👈 FIX HERE
+type Ctx = { params: Promise<{ id: string }> };
 
-  const supabase = supabaseServerClient();
+export async function DELETE(_req: Request, { params }: Ctx) {
+  const { id } = await params;
+  const supabase = await supabaseServerClient();
 
-  const { error } = await supabase.from("garments").delete().eq("id", id);
+  const { error } = await supabase
+    .from("garments")
+    .update({ is_active: false })
+    .eq("id", id);
 
-  if (error) return Response.json({ error }, { status: 500 });
-
-  return Response.json({ success: true });
+  if (error) return NextResponse.json({ error }, { status: 500 });
+  return NextResponse.json({ success: true });
 }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params; // 👈 FIX HERE
-
-  const body = await request.json();
-  const supabase = supabaseServerClient();
+export async function PUT(req: Request, { params }: Ctx) {
+  const { id } = await params;
+  const supabase = await supabaseServerClient();
+  const body = await req.json();
 
   const { error } = await supabase.from("garments").update(body).eq("id", id);
 
-  if (error) return Response.json({ error }, { status: 500 });
-
-  return Response.json({ success: true });
+  if (error) return NextResponse.json({ error }, { status: 500 });
+  return NextResponse.json({ success: true });
 }
